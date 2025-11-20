@@ -3,7 +3,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function Home() {
   const [bachillerato, setBachillerato] = useState('')
@@ -25,9 +25,9 @@ export default function Home() {
     setResultado(null)
 
     try {
-      console.log('Enviando requisição para:', `${API_URL}/consulta-bachillerato`)
+      console.log('Enviando requisição para:', `${API_URL}/api/consulta-bachillerato`)
       
-      const response = await axios.post(`${API_URL}/consulta-bachillerato`, {
+      const response = await axios.post(`${API_URL}/api/consulta-bachillerato`, {
         bachillerato: bachillerato.trim(),
         fechaNacimiento: fechaNacimiento.trim()
       })
@@ -63,7 +63,7 @@ export default function Home() {
 
   const handleDownloadPDF = () => {
     if (resultado?.pdfUrl) {
-      const pdfFullUrl = `http://localhost:5000${resultado.pdfUrl}`
+      const pdfFullUrl = `${API_URL}${resultado.pdfUrl}`
       window.open(pdfFullUrl, '_blank')
     }
   }
@@ -121,7 +121,7 @@ export default function Home() {
               Consulta de Bachillerato
             </h2>
             <p className="text-xl text-gray-600 mb-2">
-              Verificação Oficial - MEC Paraguay
+              MEC Paraguay
             </p>
             <p className="text-gray-500 max-w-2xl mx-auto">
               Sistema automatizado para consulta e validação de certificados de bachillerato no Ministerio de Educación y Ciencias

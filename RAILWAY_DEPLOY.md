@@ -128,7 +128,7 @@ O frontend vamos colocar na Vercel (grátis e otimizado para Next.js).
 ### 3.2 Importar Projeto
 
 1. No dashboard da Vercel, clique em **Add New** → **Project**
-2. Selecione o repositório **Zion-Assessoria**
+2. Selecione o repositório **RicoAssessoriaMEC**
 3. Configure:
    - **Framework Preset**: Next.js ✅ (detectado automaticamente)
    - **Root Directory**: clique em **Edit** e selecione `frontend`

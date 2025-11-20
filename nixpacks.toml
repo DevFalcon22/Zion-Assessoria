@@ -3,7 +3,7 @@ nixPkgs = ['nodejs_18', 'chromium']
 
 [phases.install]
 cmds = [
-  'cd backend && npm ci --only=production'
+  'cd backend && npm install --omit=dev'
 ]
 
 [phases.build]

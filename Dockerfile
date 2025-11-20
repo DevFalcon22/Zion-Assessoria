@@ -33,7 +33,7 @@ COPY backend/package*.json ./backend/
 
 # Instalar dependências do backend
 WORKDIR /app/backend
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copiar código do backend
 COPY backend/ ./
