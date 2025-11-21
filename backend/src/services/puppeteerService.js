@@ -24,8 +24,8 @@ const CONFIG = {
   // Textos que indicam validação (case insensitive)
   VALIDADO_KEYWORDS: ['es egresado de la institución', 'Datos del Egresado', 'egresado'],
   
-  // Timeout em milissegundos
-  TIMEOUT: 30000
+  // Timeout em milissegundos - aumentado para servidor grátis
+  TIMEOUT: 90000  // 90 segundos
 };
 
 /**
@@ -60,10 +60,20 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
     // Configurações da página
     await page.setViewport({ width: 1280, height: 800 });
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    
+    // Desabilitar imagens e CSS para carregar mais rápido
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      if(['image', 'stylesheet', 'font'].includes(req.resourceType())){
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
 
     console.log(`🔗 Acessando: ${CONFIG.URL}`);
     await page.goto(CONFIG.URL, { 
-      waitUntil: 'networkidle2',
+      waitUntil: 'domcontentloaded',  // Mais rápido que networkidle2
       timeout: CONFIG.TIMEOUT 
     });
 
