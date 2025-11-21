@@ -12,6 +12,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Set build-time environment variable
+ARG NEXT_PUBLIC_API_URL=https://zion-assessoria-production.up.railway.app
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Build Next.js static export
 RUN npm run build
 
