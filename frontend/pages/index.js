@@ -79,8 +79,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Zion Assessoria - Consulta Bachillerato MEC</title>
-        <meta name="description" content="Sistema de consulta de bachilleratos do MEC Paraguay" />
+        <title>Zion Assessoria - Consulta RUE MEC</title>
+        <meta name="description" content="Sistema de consulta RUE - Registro Único del Estudiante - MEC Paraguay" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/logo-zion.png" />
       </Head>
@@ -119,13 +119,13 @@ export default function Home() {
               </svg>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Consulta de Bachillerato
+              Consulta RUE
             </h2>
             <p className="text-xl text-gray-600 mb-2">
-              MEC Paraguay
+              Registro Único del Estudiante - MEC Paraguay
             </p>
             <p className="text-gray-500 max-w-2xl mx-auto">
-              Sistema automatizado para consulta e validação de certificados de bachillerato no Ministerio de Educación y Ciencias
+              Sistema de consulta para ensino médio regular - validação do ciclo do ensino médio
             </p>
           </div>
         </section>
@@ -143,7 +143,7 @@ export default function Home() {
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">Aviso Importante</h4>
                 <p className="text-sm text-amber-800">
-                  <strong>Quem fez EJA (Educação de Jovens e Adultos) não aparecerá neste sistema.</strong> Este sistema consulta apenas bachilleratos do ensino regular do MEC Paraguay.
+                  <strong>Quem fez EJA (Educação de Jovens e Adultos) não aparecerá neste sistema.</strong> Este sistema consulta apenas o ensino médio regular do MEC Paraguay.
                 </p>
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function Home() {
           <div className="card mb-8 hover:shadow-xl transition-shadow duration-300">
             <div className="border-l-4 border-primary-500 pl-4 mb-6">
               <h3 className="text-2xl font-bold text-gray-900">Iniciar Consulta</h3>
-              <p className="text-gray-600 text-sm mt-1">Preencha os dados abaixo para verificar o bachillerato</p>
+              <p className="text-gray-600 text-sm mt-1">Preencha os dados abaixo para consultar o RUE</p>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
@@ -161,14 +161,14 @@ export default function Home() {
                   htmlFor="bachillerato" 
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Número do Documento do Estudante *
+                  Número de Documento (RG ou CPF) *
                 </label>
                 <input
                   type="text"
                   id="bachillerato"
                   value={bachillerato}
                   onChange={(e) => setBachillerato(e.target.value)}
-                  placeholder="Digite o número do documento"
+                  placeholder="Digite o RG ou CPF"
                   className="input-field"
                   disabled={loading}
                 />
