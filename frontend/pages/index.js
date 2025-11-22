@@ -3,7 +3,8 @@ import { useState } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+// Usar rota API local como proxy (evita Mixed Content HTTPS/HTTP)
+const API_URL = '/api'
 
 export default function Home() {
   const [bachillerato, setBachillerato] = useState('')
@@ -25,9 +26,9 @@ export default function Home() {
     setResultado(null)
 
     try {
-      console.log('Enviando requisição para:', `${API_URL}/api/consulta-bachillerato`)
+      console.log('Enviando requisição para:', `${API_URL}/consulta-bachillerato`)
       
-      const response = await axios.post(`${API_URL}/api/consulta-bachillerato`, {
+      const response = await axios.post(`${API_URL}/consulta-bachillerato`, {
         bachillerato: bachillerato.trim(),
         fechaNacimiento: fechaNacimiento.trim()
       })
