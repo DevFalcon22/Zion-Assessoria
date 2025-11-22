@@ -187,82 +187,71 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
 
     const status = isValidado ? 'VALIDADO' : 'NAO_VALIDADO';
     
-    let pdfUrl = null;
+    let pdfBuffer = null;
 
-    // Se está validado, gera o PDF
+    // Se está validado, gera o PDF em memória (não salva no disco)
     if (isValidado) {
-      console.log('✅ Bachillerato validado! Gerando PDF...');
-      
-      const printsDir = path.join(__dirname, '../../prints');
-      
-      // Garante que a pasta prints existe
-      if (!fs.existsSync(printsDir)) {
-        fs.mkdirSync(printsDir, { recursive: true });
-      }
+      console.log('✅ Bachillerato validado! Gerando PDF em memória...');
 
-      const filename = `bachillerato_${bachillerato}_${Date.now()}.pdf`;
-      const pdfPath = path.join(printsDir, filename);
-
-      // Remove apenas os links de navegação, mantém o resto (incluindo logo)
+      // Prepara a página para impressão mantendo todos os dados
       await page.evaluate(() => {
-        // Remove apenas os links de navegação do topo (Inicio, Portal MEC, etc)
-        const navLinks = document.querySelectorAll('a[href*="Inicio"], a[href*="Portal"], a[href*="Consultar"], a[href*="Iniciar"]');
-        navLinks.forEach(link => {
-          // Remove só se for texto, não imagem
-          if (!link.querySelector('img')) {
-            link.remove();
-          }
+        // Remove apenas elementos de navegação que não agregam ao comprovante
+        const selectorsToRemove = [
+          '.navbar-toggle', 
+          'button[data-toggle]',
+          'a[href*="Ayuda"]',
+          '.breadcrumb'
+        ];
+        
+        selectorsToRemove.forEach(selector => {
+          document.querySelectorAll(selector).forEach(el => el.remove());
         });
         
-        // Remove menu hamburguer se houver
-        const menuBtn = document.querySelector('.navbar-toggle, button[data-toggle]');
-        if (menuBtn) menuBtn.remove();
-        
-        // Remove botão "Ayuda" se houver
-        const ayudaBtn = document.querySelector('a[href*="Ayuda"]');
-        if (ayudaBtn) ayudaBtn.remove();
-        
-        // Ajusta o body para PDF
-        document.body.style.padding = '20px';
+        // Ajusta estilos para melhor visualização no PDF
+        document.body.style.padding = '15px';
         document.body.style.margin = '0';
+        document.body.style.backgroundColor = 'white';
+        
+        // Garante que tabelas e dados fiquem visíveis
+        const tables = document.querySelectorAll('table');
+        tables.forEach(table => {
+          table.style.width = '100%';
+          table.style.borderCollapse = 'collapse';
+        });
+        
+        // Destaca o resultado/status
+        const resultElements = document.querySelectorAll('.alert, .result, .status');
+        resultElements.forEach(el => {
+          el.style.pageBreakInside = 'avoid';
+        });
       });
 
       // Aguarda a página se ajustar
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(1500);
 
-      // Remove elementos desnecessários (menu, rodapé, etc)
-      await page.evaluate(() => {
-        // Remove cabeçalhos, menus e rodapés que podem atrapalhar
-        const selectorsToHide = [
-          'header', 'nav', 'footer', 
-          '.header', '.navbar', '.footer',
-          '[role="banner"]', '[role="navigation"]'
-        ];
-        selectorsToHide.forEach(selector => {
-          document.querySelectorAll(selector).forEach(el => {
-            el.style.display = 'none';
-          });
-        });
-      });
-
-      // Gera o PDF com altura automática (captura página completa)
-      await page.pdf({
-        path: pdfPath,
+      // Gera o PDF em memória (não salva no disco)
+      pdfBuffer = await page.pdf({
         format: 'A4',
         landscape: true,  // Modo paisagem
         printBackground: true,
+        displayHeaderFooter: true,
+        headerTemplate: '<div></div>',
+        footerTemplate: `
+          <div style="font-size: 10px; text-align: center; width: 100%; padding: 5px;">
+            Documento gerado em: ${new Date().toLocaleString('pt-BR')} | Zion Assessoria
+          </div>
+        `,
         margin: {
-          top: '10mm',
+          top: '15mm',
           right: '10mm',
-          bottom: '10mm',
+          bottom: '20mm',
           left: '10mm'
         },
-        scale: 0.95,  // Escala para caber melhor
+        scale: 0.85,  // Reduz um pouco para caber mais conteúdo
         preferCSSPageSize: false
       });
 
-      pdfUrl = `/prints/${filename}`;
-      console.log(`📑 PDF gerado: ${pdfUrl}`);
+      console.log(`📑 PDF gerado em memória (${(pdfBuffer.length / 1024).toFixed(2)} KB)`);
     } else {
       console.log('❌ Bachillerato não validado');
     }
@@ -270,12 +259,12 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
     // Fecha o navegador
     await browser.close();
 
-    // Retorna o resultado
+    // Retorna o resultado com PDF em base64 (se validado)
     return {
       status,
       mensagem: resultadoTexto.trim(),
       bachillerato,
-      pdfUrl,
+      pdfBase64: pdfBuffer ? pdfBuffer.toString('base64') : null,
       timestamp: new Date().toISOString()
     };
 

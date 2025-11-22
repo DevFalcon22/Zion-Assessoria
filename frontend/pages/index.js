@@ -63,11 +63,25 @@ export default function Home() {
   }
 
   const handleDownloadPDF = () => {
-    if (resultado?.pdfUrl) {
-      // Usar backend Oracle Cloud diretamente para download de PDF
-      const BACKEND_URL = 'http://146.235.29.239:5000'
-      const pdfFullUrl = `${BACKEND_URL}${resultado.pdfUrl}`
-      window.open(pdfFullUrl, '_blank')
+    if (resultado?.pdfBase64) {
+      // Converte base64 para Blob e cria download
+      const byteCharacters = atob(resultado.pdfBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      
+      // Cria URL temporária e faz download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprovante_rue_${bachillerato}_${Date.now()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     }
   }
 
@@ -293,7 +307,7 @@ export default function Home() {
                 </p>
               </div>
 
-              {resultado.pdfUrl && (
+              {resultado.pdfBase64 && (
                 <div className="mt-6">
                   <button
                     onClick={handleDownloadPDF}
