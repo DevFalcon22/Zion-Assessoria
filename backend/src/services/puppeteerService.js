@@ -228,21 +228,37 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
       });
 
       // Aguarda a página se ajustar
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
-      // Gera o PDF com altura automática (não corta o conteúdo)
+      // Remove elementos desnecessários (menu, rodapé, etc)
+      await page.evaluate(() => {
+        // Remove cabeçalhos, menus e rodapés que podem atrapalhar
+        const selectorsToHide = [
+          'header', 'nav', 'footer', 
+          '.header', '.navbar', '.footer',
+          '[role="banner"]', '[role="navigation"]'
+        ];
+        selectorsToHide.forEach(selector => {
+          document.querySelectorAll(selector).forEach(el => {
+            el.style.display = 'none';
+          });
+        });
+      });
+
+      // Gera o PDF com altura automática (captura página completa)
       await page.pdf({
         path: pdfPath,
         format: 'A4',
-        landscape: true,  // Modo paisagem
+        landscape: false,  // Modo retrato (melhor para formulários)
         printBackground: true,
         margin: {
-          top: '15mm',
-          right: '15mm',
-          bottom: '15mm',
-          left: '15mm'
+          top: '10mm',
+          right: '10mm',
+          bottom: '10mm',
+          left: '10mm'
         },
-        scale: 0.8  // Reduz um pouco para caber melhor
+        scale: 0.95,  // Escala para caber melhor
+        preferCSSPageSize: false
       });
 
       pdfUrl = `/prints/${filename}`;
