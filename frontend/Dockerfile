@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Set build-time environment variable
-ARG NEXT_PUBLIC_API_URL=https://zion-assessoria-production.up.railway.app
+ARG NEXT_PUBLIC_API_URL=https://courageous-imagination-production.up.railway.app
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 # Build Next.js static export
