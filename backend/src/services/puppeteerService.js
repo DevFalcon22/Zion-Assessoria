@@ -184,47 +184,18 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
     if (isValidado) {
       console.log('✅ Bachillerato validado! Gerando PDF em memória...');
 
-      // Prepara a página para impressão mantendo todos os dados
-      await page.evaluate(() => {
-        // Remove apenas elementos de navegação que não agregam ao comprovante
-        const selectorsToRemove = [
-          '.navbar-toggle', 
-          'button[data-toggle]',
-          'a[href*="Ayuda"]',
-          '.breadcrumb'
-        ];
-        
-        selectorsToRemove.forEach(selector => {
-          document.querySelectorAll(selector).forEach(el => el.remove());
-        });
-        
-        // Ajusta estilos para melhor visualização no PDF
-        document.body.style.padding = '15px';
-        document.body.style.margin = '0';
-        document.body.style.backgroundColor = 'white';
-        
-        // Garante que tabelas e dados fiquem visíveis
-        const tables = document.querySelectorAll('table');
-        tables.forEach(table => {
-          table.style.width = '100%';
-          table.style.borderCollapse = 'collapse';
-        });
-        
-        // Destaca o resultado/status
-        const resultElements = document.querySelectorAll('.alert, .result, .status');
-        resultElements.forEach(el => {
-          el.style.pageBreakInside = 'avoid';
-        });
-      });
+      // Aplica media print CSS antes de gerar o PDF (simula "Imprimir")
+      await page.emulateMediaType('print');
 
-      // Aguarda a página se ajustar
-      await page.waitForTimeout(1500);
+      // Aguarda renderização com CSS de impressão
+      await page.waitForTimeout(1000);
 
-      // Gera o PDF em memória (não salva no disco)
+      // Gera o PDF em memória (não salva no disco) - modo paisagem
       pdfBuffer = await page.pdf({
         format: 'A4',
         landscape: true,  // Modo paisagem
         printBackground: true,
+        preferCSSPageSize: false,
         displayHeaderFooter: true,
         headerTemplate: '<div></div>',
         footerTemplate: `
@@ -238,8 +209,7 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
           bottom: '20mm',
           left: '10mm'
         },
-        scale: 0.85,  // Reduz um pouco para caber mais conteúdo
-        preferCSSPageSize: false
+        scale: 0.9
       });
 
       console.log(`📑 PDF gerado em memória (${(pdfBuffer.length / 1024).toFixed(2)} KB)`);
