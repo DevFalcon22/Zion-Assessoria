@@ -24,8 +24,8 @@ const CONFIG = {
   // Textos que indicam validação (case insensitive)
   VALIDADO_KEYWORDS: ['es egresado de la institución', 'Datos del Egresado', 'egresado'],
   
-  // Timeout em milissegundos - aumentado para servidor grátis
-  TIMEOUT: 90000  // 90 segundos
+  // Timeout em milissegundos - reduzido para compatibilidade com Vercel Free (60s)
+  TIMEOUT: 45000  // 45 segundos (deixa 15s de margem para processamento)
 };
 
 /**
