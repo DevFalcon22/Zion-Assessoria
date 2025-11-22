@@ -159,7 +159,7 @@ export default function Home() {
               <div>
                 <h4 className="font-semibold text-amber-900 mb-1">Aviso Importante</h4>
                 <p className="text-sm text-amber-800">
-                  <strong>Quem fez EJA (Educação de Jovens e Adultos) não aparecerá neste sistema.</strong> Este sistema consulta apenas o ensino médio regular do MEC Paraguay.
+                  <strong>Quem fez EJA (Educação de Jovens e Adultos) não aparecerá neste sistema.</strong> Este sistema consulta apenas o ensino médio regular feito no Paraguay ou no Brasil reconhecido no MEC Paraguay.
                 </p>
               </div>
             </div>
