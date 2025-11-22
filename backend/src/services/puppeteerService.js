@@ -79,10 +79,6 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
 
     // Aguarda a página carregar completamente e scripts executarem
     await page.waitForTimeout(3000);
-    
-    console.log('📸 Tirando screenshot inicial...');
-    const initialScreenshot = path.join(__dirname, '../../prints/debug_initial.png');
-    await page.screenshot({ path: initialScreenshot, fullPage: true });
 
     console.log('✍️ Preenchendo campos do formulário...');
     
@@ -127,11 +123,6 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
       ]);
       console.log('✅ Resultado encontrado!');
     } catch (err) {
-      // Se não apareceu resultado após preencher, tira screenshot
-      const debugPath = path.join(__dirname, '../../prints/debug_after_fill.png');
-      await page.screenshot({ path: debugPath, fullPage: true });
-      console.log(`📸 Screenshot após preenchimento salvo em: ${debugPath}`);
-      
       // Tenta pegar o HTML da página para debug
       const pageHTML = await page.evaluate(() => document.body.innerText);
       console.log('📄 Texto da página:', pageHTML.substring(0, 1000));

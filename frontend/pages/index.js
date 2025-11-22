@@ -34,6 +34,8 @@ export default function Home() {
       })
 
       console.log('Resposta recebida:', response.data)
+      console.log('PDF Base64 presente?', !!response.data.pdfBase64)
+      console.log('Tamanho do PDF Base64:', response.data.pdfBase64?.length)
       setResultado(response.data)
       
     } catch (err) {
