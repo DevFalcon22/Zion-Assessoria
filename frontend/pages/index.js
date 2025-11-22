@@ -64,7 +64,9 @@ export default function Home() {
 
   const handleDownloadPDF = () => {
     if (resultado?.pdfUrl) {
-      const pdfFullUrl = `${API_URL}${resultado.pdfUrl}`
+      // Usar backend Oracle Cloud diretamente para download de PDF
+      const BACKEND_URL = 'http://146.235.29.239:5000'
+      const pdfFullUrl = `${BACKEND_URL}${resultado.pdfUrl}`
       window.open(pdfFullUrl, '_blank')
     }
   }
