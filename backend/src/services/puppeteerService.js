@@ -249,7 +249,7 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
       await page.pdf({
         path: pdfPath,
         format: 'A4',
-        landscape: false,  // Modo retrato (melhor para formulários)
+        landscape: true,  // Modo paisagem
         printBackground: true,
         margin: {
           top: '10mm',
