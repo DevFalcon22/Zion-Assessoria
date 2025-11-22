@@ -1,6 +1,7 @@
 # Build stage
 FROM node:18-alpine AS builder
 
+# Force rebuild - v2
 WORKDIR /app
 
 # Copy package files
