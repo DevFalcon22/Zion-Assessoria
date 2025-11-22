@@ -1,7 +1,7 @@
 # Build stage
 FROM node:18-alpine AS builder
 
-# Force rebuild - v2
+# Force rebuild - v3
 WORKDIR /app
 
 # Copy package files
@@ -17,21 +17,22 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=https://courageous-imagination-production.up.railway.app
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# Build Next.js static export
-RUN npm run build && ls -la /app/out
+# Build Next.js standalone
+RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Copy built static files
-COPY --from=builder /app/out /usr/share/nginx/html
+WORKDIR /app
 
-# Verify files were copied
-RUN ls -la /usr/share/nginx/html
+# Copy standalone build
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 3000
 
-EXPOSE 80
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.js"]

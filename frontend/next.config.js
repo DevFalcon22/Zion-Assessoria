@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
+  // Mudado de 'export' para standalone para melhor compatibilidade com Railway
+  output: 'standalone',
   images: {
     unoptimized: true,
   },
