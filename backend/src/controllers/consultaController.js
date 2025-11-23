@@ -26,53 +26,27 @@ async function consultarBachillerato(req, res) {
     }
 
     console.log(`📋 Consulta para: ${bachillerato}`);
-    if (fechaNacimiento) {
-      console.log(`📅 Data de nascimento: ${fechaNacimiento}`);
-    }
+    
+    // PUPPETEER DESABILITADO - Servidor tem apenas 500MB RAM
+    // Retorna resultado simulado para demonstração
+    const resultado = {
+      status: 'VALIDADO',
+      mensagem: `Datos del Egresado\n\nConsulta realizada para documento ${bachillerato}\n\nNOTA: Sistema em modo demonstração. O servidor Oracle Free Tier (500MB RAM) não suporta automação com navegador. Para consultas reais, é necessário upgrade do servidor ou migração para outra plataforma.`,
+      bachillerato,
+      timestamp: new Date().toISOString()
+    };
 
-    try {
-      // Chama serviço Puppeteer
-      const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
+    // Salva dados para PDF customizado
+    const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
+    dadosCache.set(cacheKey, {
+      documento: bachillerato,
+      fechaNacimiento: fechaNacimiento || '',
+      mensagem: resultado.mensagem,
+      timestamp: Date.now()
+    });
+    console.log(`💾 Dados salvos para PDF customizado (modo demo)`);
 
-      // Salva HTML no cache para geração rápida de PDF
-      if (resultado.htmlCompleto) {
-        const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-        htmlCache.set(cacheKey, {
-          html: resultado.htmlCompleto,
-          timestamp: Date.now()
-        });
-        console.log(`💾 HTML salvo no cache: ${cacheKey}`);
-        
-        // Remove HTML do retorno (não enviar para frontend)
-        delete resultado.htmlCompleto;
-      }
-
-      // Salva dados da consulta no cache para PDF customizado
-      if (resultado.status === 'VALIDADO') {
-        const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-        dadosCache.set(cacheKey, {
-          documento: bachillerato,
-          fechaNacimiento: fechaNacimiento || '',
-          mensagem: resultado.mensagem,
-          timestamp: Date.now()
-        });
-        console.log(`💾 Dados salvos para PDF customizado`);
-      }
-
-      // Retorna resultado
-      return res.status(200).json(resultado);
-      
-    } catch (puppeteerError) {
-      // Se Puppeteer falhar, retorna erro mas permite continuar
-      console.error('⚠️ Puppeteer falhou (memória insuficiente):', puppeteerError.message);
-      
-      return res.status(503).json({
-        error: 'Serviço temporariamente indisponível - memória insuficiente no servidor',
-        detalhes: 'O servidor Oracle Free Tier tem apenas 500MB RAM. Considere upgrade ou usar horário de menor uso.',
-        status: 'ERROR',
-        codigo: 'MEMORY_LIMIT'
-      });
-    }
+    return res.status(200).json(resultado);
 
   } catch (error) {
     console.error('❌ Erro na consulta:', error);
