@@ -27,15 +27,17 @@ export default function Home() {
     setResultado(null)
 
     try {
-      console.log('⚡ Consulta rápida para:', bachillerato)
+      console.log('⚡ Consulta para:', bachillerato)
       
-      // Consulta rápida (sem Puppeteer, ~1 segundo)
+      // Consulta (usa Puppeteer porque site precisa JavaScript)
       const response = await axios.post(`${API_URL}/consulta-bachillerato`, {
         bachillerato: bachillerato.trim(),
         fechaNacimiento: fechaNacimiento.trim()
       })
 
       console.log('✅ Resultado recebido:', response.data)
+      console.log('📊 Status:', response.data.status)
+      console.log('📄 Mensagem:', response.data.mensagem?.substring(0, 100))
       setResultado(response.data)
       
     } catch (err) {
