@@ -17,7 +17,6 @@ async function consultarBachillerato(req, res) {
   try {
     const { bachillerato, fechaNacimiento } = req.body;
 
-    // Validação básica
     if (!bachillerato || bachillerato.trim() === '') {
       return res.status(400).json({
         error: 'Número de documento é obrigatório',
@@ -26,44 +25,29 @@ async function consultarBachillerato(req, res) {
     }
 
     console.log(`📋 Consulta para: ${bachillerato}`);
-    if (fechaNacimiento) {
-      console.log(`📅 Data de nascimento: ${fechaNacimiento}`);
-    }
+    
+    // MODO LEVE: Sem Puppeteer, consulta fake instantânea para teste
+    // Retorna dados válidos para testar PDF
+    const resultado = {
+      status: 'VALIDADO',
+      mensagem: `Datos del Egresado\n\nRESULTADO DE EJEMPLO PARA TESTE\nes egresado de la institución: INSTITUCION EXTRANJERA - EM\nen el año 2024\ndepartamento Extranjero\ndistrito de Territorio Extranjero\n\nNOTA: Sistema em modo teste (sem Puppeteer). Oracle Free Tier 500MB RAM insuficiente.`,
+      bachillerato,
+      timestamp: new Date().toISOString()
+    };
 
-    // Chama serviço Puppeteer
-    const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
+    // Salva para PDF
+    const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
+    dadosCache.set(cacheKey, {
+      documento: bachillerato,
+      fechaNacimiento: fechaNacimiento || '',
+      mensagem: resultado.mensagem,
+      timestamp: Date.now()
+    });
 
-    // Salva HTML no cache para geração rápida de PDF
-    if (resultado.htmlCompleto) {
-      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-      htmlCache.set(cacheKey, {
-        html: resultado.htmlCompleto,
-        timestamp: Date.now()
-      });
-      console.log(`💾 HTML salvo no cache: ${cacheKey}`);
-      
-      // Remove HTML do retorno (não enviar para frontend)
-      delete resultado.htmlCompleto;
-    }
-
-    // Salva dados da consulta no cache para PDF customizado
-    if (resultado.status === 'VALIDADO') {
-      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-      dadosCache.set(cacheKey, {
-        documento: bachillerato,
-        fechaNacimiento: fechaNacimiento || '',
-        mensagem: resultado.mensagem,
-        timestamp: Date.now()
-      });
-      console.log(`💾 Dados salvos para PDF customizado`);
-    }
-
-    // Retorna resultado
     return res.status(200).json(resultado);
 
   } catch (error) {
-    console.error('❌ Erro na consulta:', error);
-    
+    console.error('❌ Erro:', error);
     return res.status(500).json({
       error: 'Erro ao processar consulta',
       detalhes: error.message,
