@@ -10,6 +10,7 @@ export default function Home() {
   const [bachillerato, setBachillerato] = useState('')
   const [fechaNacimiento, setFechaNacimiento] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingPDF, setLoadingPDF] = useState(false)
   const [resultado, setResultado] = useState(null)
   const [error, setError] = useState(null)
 
@@ -26,16 +27,15 @@ export default function Home() {
     setResultado(null)
 
     try {
-      console.log('Enviando requisição para:', `${API_URL}/consulta-bachillerato`)
+      console.log('⚡ Consulta rápida para:', bachillerato)
       
+      // Consulta rápida (sem Puppeteer, ~1 segundo)
       const response = await axios.post(`${API_URL}/consulta-bachillerato`, {
         bachillerato: bachillerato.trim(),
         fechaNacimiento: fechaNacimiento.trim()
       })
 
-      console.log('Resposta recebida:', response.data)
-      console.log('PDF Base64 presente?', !!response.data.pdfBase64)
-      console.log('Tamanho do PDF Base64:', response.data.pdfBase64?.length)
+      console.log('✅ Resultado recebido:', response.data)
       setResultado(response.data)
       
     } catch (err) {
@@ -64,23 +64,46 @@ export default function Home() {
     }
   }
 
-  const handleViewPDF = () => {
-    if (resultado?.pdfBase64) {
-      // Converte base64 para Blob
-      const byteCharacters = atob(resultado.pdfBase64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+  const handleViewPDF = async () => {
+    if (!bachillerato.trim()) {
+      return
+    }
+
+    setLoadingPDF(true)
+    
+    try {
+      console.log('📄 Gerando PDF para:', bachillerato)
+      
+      // Gera PDF usando Puppeteer (rota separada)
+      const response = await axios.post(`${API_URL}/gerar-pdf`, {
+        bachillerato: bachillerato.trim(),
+        fechaNacimiento: fechaNacimiento.trim()
+      })
+
+      if (response.data.pdfBase64) {
+        // Converte base64 para Blob
+        const byteCharacters = atob(response.data.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        
+        // Cria URL temporária e abre em nova aba
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        // Revoga URL após 1 minuto para liberar memória
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+        
+        console.log('✅ PDF aberto em nova aba')
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
-      
-      // Cria URL temporária e abre em nova aba
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      
-      // Revoga URL após 1 minuto para liberar memória
-      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.error('❌ Erro ao gerar PDF:', err)
+      setError('Erro ao gerar PDF. Tente novamente.')
+    } finally {
+      setLoadingPDF(false)
     }
   }
 
@@ -306,15 +329,33 @@ export default function Home() {
                 </p>
               </div>
 
-              {resultado.pdfBase64 && (
+              {resultado.status === 'VALIDADO' && (
                 <div className="mt-6">
                   <button
                     onClick={handleViewPDF}
-                    className="btn-secondary w-full flex items-center justify-center"
+                    disabled={loadingPDF}
+                    className="btn-secondary w-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    {loadingPDF ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Gerando PDF...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Visualizar Comprovante (PDF)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
                     </svg>
                     Visualizar Comprovante (PDF)
                   </button>
