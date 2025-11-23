@@ -358,11 +358,6 @@ export default function Home() {
                   </button>
                 </div>
               )}
-                    </svg>
-                    Visualizar Comprovante (PDF)
-                  </button>
-                </div>
-              )}
 
               <div className="mt-4 text-xs text-gray-500">
                 Consultado em: {new Date(resultado.timestamp).toLocaleString('pt-BR')}
