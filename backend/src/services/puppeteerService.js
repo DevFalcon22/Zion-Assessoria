@@ -24,8 +24,8 @@ const CONFIG = {
   // Textos que indicam validação (case insensitive)
   VALIDADO_KEYWORDS: ['es egresado de la institución', 'Datos del Egresado', 'egresado'],
   
-  // Timeout em milissegundos - reduzido para compatibilidade com Vercel Free (60s)
-  TIMEOUT: 45000  // 45 segundos (deixa 15s de margem para processamento)
+  // Timeout em milissegundos - otimizado para Vercel Free (60s)
+  TIMEOUT: 35000  // 35 segundos
 };
 
 /**
@@ -78,7 +78,7 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
     });
 
     // Aguarda a página carregar completamente e scripts executarem
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
 
     console.log('✍️ Preenchendo campos do formulário...');
     
@@ -110,16 +110,16 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
     console.log('⏳ Aguardando carregamento automático dos dados...');
     
     // Espera o resultado aparecer (pode demorar alguns segundos)
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     console.log('⏳ Aguardando resultado...');
     
-    // Espera aparecer resultado (sucesso OU erro) - com timeout maior
+    // Espera aparecer resultado (sucesso OU erro)
     try {
       await Promise.race([
-        page.waitForSelector(CONFIG.RESULT_SELECTOR, { timeout: 15000, visible: true }),
-        page.waitForSelector(CONFIG.ERROR_SELECTOR, { timeout: 15000, visible: true }),
-        page.waitForSelector('.panel', { timeout: 15000, visible: true }) // Qualquer painel
+        page.waitForSelector(CONFIG.RESULT_SELECTOR, { timeout: 10000, visible: true }),
+        page.waitForSelector(CONFIG.ERROR_SELECTOR, { timeout: 10000, visible: true }),
+        page.waitForSelector('.panel', { timeout: 10000, visible: true }) // Qualquer painel
       ]);
       console.log('✅ Resultado encontrado!');
     } catch (err) {
