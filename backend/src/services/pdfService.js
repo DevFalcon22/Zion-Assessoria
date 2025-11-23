@@ -12,13 +12,84 @@ const CONFIG = {
   CHROME_PATH: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/microsoft-edge-stable'
 };
 
+// Cache temporário do HTML (evita refazer consulta)
+const htmlCache = new Map();
+
 /**
- * Gera PDF da página de verificação do MEC-PY
- * @param {string} documento - Número do documento
- * @param {string} fechaNacimiento - Data de nascimento (opcional)
+ * Gera PDF RÁPIDO a partir do HTML salvo (sem navegação)
+ * @param {string} htmlContent - HTML completo da página
  * @returns {Promise<Buffer>} Buffer do PDF gerado
  */
-async function gerarPDFBachillerato(documento, fechaNacimiento) {
+async function gerarPDFDoHTML(htmlContent) {
+  let browser = null;
+  
+  try {
+    console.log('📄 Gerando PDF a partir do HTML salvo (SEM navegação)...');
+    
+    browser = await puppeteer.launch({
+      executablePath: CONFIG.CHROME_PATH,
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-extensions',
+        '--single-process'
+      ]
+    });
+
+    const page = await browser.newPage();
+    
+    // Carrega HTML direto (SUPER RÁPIDO - sem navegação)
+    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+    console.log('✅ HTML carregado!');
+
+    // Aplica CSS de impressão
+    await page.emulateMediaType('print');
+
+    // Gera PDF
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      landscape: true,
+      printBackground: true,
+      displayHeaderFooter: true,
+      headerTemplate: '<div></div>',
+      footerTemplate: `
+        <div style="font-size: 10px; text-align: center; width: 100%; padding: 5px;">
+          Documento gerado em: ${new Date().toLocaleString('pt-BR')} | Zion Assessoria
+        </div>
+      `,
+      margin: { top: '15mm', right: '10mm', bottom: '20mm', left: '10mm' },
+      scale: 0.9
+    });
+
+    await browser.close();
+    
+    console.log(`✅ PDF gerado (${(pdfBuffer.length / 1024).toFixed(2)} KB) em ~3-5 segundos!`);
+    return pdfBuffer;
+    
+  } catch (error) {
+    if (browser) await browser.close();
+    throw new Error(`Falha ao gerar PDF: ${error.message}`);
+  }
+}
+
+/**
+ * Gera PDF da página de verificação do MEC-PY (MÉTODO ANTIGO - LENTO)
+ * @param {string} documento - Número do documento
+ * @param {string} fechaNacimiento - Data de nascimento (opcional)
+ * @param {string} htmlSalvo - HTML já capturado (opcional, para evitar navegação)
+ * @returns {Promise<Buffer>} Buffer do PDF gerado
+ */
+async function gerarPDFBachillerato(documento, fechaNacimiento, htmlSalvo = null) {
+  // Se já tem HTML salvo, usa método rápido
+  if (htmlSalvo) {
+    console.log('⚡ Usando HTML salvo - geração rápida!');
+    return gerarPDFDoHTML(htmlSalvo);
+  }
+  
+  // Caso contrário, faz consulta completa (LENTO)
   let browser = null;
   
   try {

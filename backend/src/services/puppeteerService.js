@@ -181,6 +181,10 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
     
     console.log(isValidado ? '✅ Bachillerato validado!' : '❌ Bachillerato não validado');
 
+    // Captura o HTML completo da página para gerar PDF depois (sem nova navegação)
+    const htmlCompleto = await page.content();
+    console.log('💾 HTML capturado para PDF futuro');
+
     // Fecha o navegador
     await browser.close();
 
@@ -189,7 +193,8 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
       status,
       mensagem: resultadoTexto.trim(),
       bachillerato,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      htmlCompleto  // HTML para gerar PDF rapidamente depois
     };
 
   } catch (error) {
