@@ -25,7 +25,7 @@ const CONFIG = {
   VALIDADO_KEYWORDS: ['es egresado de la institución', 'Datos del Egresado', 'egresado'],
   
   // Timeout em milissegundos - otimizado para Vercel Free (60s)
-  TIMEOUT: 35000  // 35 segundos
+  TIMEOUT: 30000  // 30 segundos
 };
 
 /**
@@ -43,16 +43,28 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
     // DEBUG: Mude para false para ver o navegador em ação
     const DEBUG_MODE = process.env.DEBUG_PUPPETEER === 'true';
     
-    // Inicia o Puppeteer
+    // Inicia o Puppeteer com configurações otimizadas para velocidade
     browser = await puppeteer.launch({
-      headless: DEBUG_MODE ? false : 'new',  // false = mostra navegador
+      headless: DEBUG_MODE ? false : 'new',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--metrics-recording-only',
+        '--mute-audio',
+        '--no-first-run',
+        '--dns-prefetch-disable',
+        '--no-zygote',
+        '--single-process'  // Importante para Oracle (1GB RAM)
       ],
-      slowMo: DEBUG_MODE ? 100 : 0  // Desacelera ações em debug
+      slowMo: DEBUG_MODE ? 100 : 0
     });
 
     const page = await browser.newPage();
@@ -73,12 +85,9 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
 
     console.log(`🔗 Acessando: ${CONFIG.URL}`);
     await page.goto(CONFIG.URL, { 
-      waitUntil: 'domcontentloaded',  // Mais rápido que networkidle2
+      waitUntil: 'networkidle0',  // Aguarda rede ficar ociosa (0 conexões)
       timeout: CONFIG.TIMEOUT 
     });
-
-    // Aguarda a página carregar completamente e scripts executarem
-    await page.waitForTimeout(1500);
 
     console.log('✍️ Preenchendo campos do formulário...');
     
@@ -106,20 +115,15 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
       console.log('⌨️ Enter pressionado após preencher documento');
     }
 
-    // IMPORTANTE: Este site NÃO tem botão submit, ele carrega automaticamente após preencher!
-    console.log('⏳ Aguardando carregamento automático dos dados...');
-    
-    // Espera o resultado aparecer (pode demorar alguns segundos)
-    await page.waitForTimeout(1000);
-
+    // IMPORTANTE: Este site carrega automaticamente após Enter
     console.log('⏳ Aguardando resultado...');
     
     // Espera aparecer resultado (sucesso OU erro)
     try {
       await Promise.race([
-        page.waitForSelector(CONFIG.RESULT_SELECTOR, { timeout: 10000, visible: true }),
-        page.waitForSelector(CONFIG.ERROR_SELECTOR, { timeout: 10000, visible: true }),
-        page.waitForSelector('.panel', { timeout: 10000, visible: true }) // Qualquer painel
+        page.waitForSelector(CONFIG.RESULT_SELECTOR, { timeout: 8000, visible: true }),
+        page.waitForSelector(CONFIG.ERROR_SELECTOR, { timeout: 8000, visible: true }),
+        page.waitForSelector('.panel', { timeout: 8000, visible: true })
       ]);
       console.log('✅ Resultado encontrado!');
     } catch (err) {
@@ -129,9 +133,6 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
       
       throw new Error('Nenhum resultado apareceu após preencher os campos. Verifique os dados informados.');
     }
-
-    // Aguarda um pouco mais para garantir que o conteúdo carregou
-    await page.waitForTimeout(2000);
 
     // Tenta extrair o texto do resultado (sucesso ou erro)
     let resultadoTexto = '';
