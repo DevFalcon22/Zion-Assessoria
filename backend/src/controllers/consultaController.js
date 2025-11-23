@@ -1,9 +1,13 @@
 const { consultarBachilleratoMEC } = require('../services/puppeteerService');
 const { gerarPDFBachillerato } = require('../services/pdfService');
+const { gerarPDFCustomizado } = require('../services/pdfCustomService');
 
 // Cache temporário de HTML (expira em 5 minutos)
 const htmlCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+// Cache de dados da consulta para PDF customizado
+const dadosCache = new Map();
 
 /**
  * Controller para consulta de bachillerato
@@ -42,6 +46,18 @@ async function consultarBachillerato(req, res) {
       delete resultado.htmlCompleto;
     }
 
+    // Salva dados da consulta no cache para PDF customizado
+    if (resultado.status === 'VALIDADO') {
+      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
+      dadosCache.set(cacheKey, {
+        documento: bachillerato,
+        fechaNacimiento: fechaNacimiento || '',
+        mensagem: resultado.mensagem,
+        timestamp: Date.now()
+      });
+      console.log(`💾 Dados salvos para PDF customizado`);
+    }
+
     // Retorna resultado
     return res.status(200).json(resultado);
 
@@ -75,23 +91,37 @@ async function gerarPDF(req, res) {
 
     console.log(`📄 Gerando PDF para: ${bachillerato}`);
 
-    // Tenta buscar HTML do cache
+    // Busca dados do cache
     const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-    const cached = htmlCache.get(cacheKey);
+    const cached = dadosCache.get(cacheKey);
     
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      // Usa PDF customizado (INSTANTÂNEO - ~100ms)
+      console.log('⚡ Gerando PDF customizado (sem Puppeteer) - INSTANTÂNEO!');
+      const pdfBuffer = await gerarPDFCustomizado(cached);
+      
+      const pdfBase64 = pdfBuffer.toString('base64');
+      
+      return res.status(200).json({
+        status: 'VALIDADO',
+        pdfBase64,
+        tamanho: `${(pdfBuffer.length / 1024).toFixed(2)} KB`,
+        timestamp: new Date().toISOString(),
+        metodo: 'customizado'
+      });
+    }
+    
+    // Se não tem cache, tenta usar HTML salvo (rápido)
+    const htmlCached = htmlCache.get(cacheKey);
     let htmlSalvo = null;
-    if (cached) {
-      const age = Date.now() - cached.timestamp;
-      if (age < CACHE_TTL) {
-        htmlSalvo = cached.html;
-        console.log(`⚡ Usando HTML do cache (${Math.round(age/1000)}s atrás) - Geração SUPER rápida!`);
-      } else {
-        htmlCache.delete(cacheKey);
-        console.log('⏰ Cache expirado, fará nova consulta...');
-      }
+    
+    if (htmlCached && (Date.now() - htmlCached.timestamp < CACHE_TTL)) {
+      htmlSalvo = htmlCached.html;
+      console.log('⚡ Usando HTML do cache - Geração rápida!');
     }
 
-    // Gera PDF usando Puppeteer (rápido se tem HTML, lento se não tem)
+    // Gera PDF usando Puppeteer (fallback - lento)
+    console.log('⏳ Gerando PDF com Puppeteer (pode demorar 30s+)...');
     const pdfBuffer = await gerarPDFBachillerato(bachillerato, fechaNacimiento, htmlSalvo);
 
     // Converte para base64
