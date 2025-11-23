@@ -331,17 +331,13 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Botão PDF - SEMPRE VISÍVEL quando há resultado */}
-              {resultado && (
+              {/* Botão PDF - Apenas para resultados VALIDADOS */}
+              {resultado.status === 'VALIDADO' && (
                 <div className="mt-6">
                   <button
                     onClick={handleViewPDF}
                     disabled={loadingPDF}
-                    className={`w-full flex items-center justify-center py-3 px-4 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${
-                      resultado.status === 'VALIDADO' 
-                        ? 'bg-green-600 hover:bg-green-700 text-white' 
-                        : 'bg-gray-600 hover:bg-gray-700 text-white'
-                    }`}
+                    className="w-full flex items-center justify-center py-3 px-4 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700 text-white"
                   >
                     {loadingPDF ? (
                       <>
@@ -356,7 +352,7 @@ export default function Home() {
                         <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
-                        {resultado.status === 'VALIDADO' ? 'Gerar Comprovante (PDF)' : 'Gerar Relatório (PDF)'}
+                        Gerar Comprovante (PDF)
                       </>
                     )}
                   </button>
