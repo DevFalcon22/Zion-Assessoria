@@ -25,24 +25,35 @@ async function consultarBachillerato(req, res) {
     }
 
     console.log(`📋 Consulta para: ${bachillerato}`);
+    if (fechaNacimiento) {
+      console.log(`📅 Data de nascimento: ${fechaNacimiento}`);
+    }
     
-    // MODO LEVE: Sem Puppeteer, consulta fake instantânea para teste
-    // Retorna dados válidos para testar PDF
-    const resultado = {
-      status: 'VALIDADO',
-      mensagem: `Datos del Egresado\n\nRESULTADO DE EJEMPLO PARA TESTE\nes egresado de la institución: INSTITUCION EXTRANJERA - EM\nen el año 2024\ndepartamento Extranjero\ndistrito de Territorio Extranjero\n\nNOTA: Sistema em modo teste (sem Puppeteer). Oracle Free Tier 500MB RAM insuficiente.`,
-      bachillerato,
-      timestamp: new Date().toISOString()
-    };
+    // Chama serviço Puppeteer (com Chromium bundled)
+    const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
 
-    // Salva para PDF
-    const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-    dadosCache.set(cacheKey, {
-      documento: bachillerato,
-      fechaNacimiento: fechaNacimiento || '',
-      mensagem: resultado.mensagem,
-      timestamp: Date.now()
-    });
+    // Salva HTML no cache
+    if (resultado.htmlCompleto) {
+      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
+      htmlCache.set(cacheKey, {
+        html: resultado.htmlCompleto,
+        timestamp: Date.now()
+      });
+      console.log(`💾 HTML salvo no cache`);
+      delete resultado.htmlCompleto;
+    }
+
+    // Salva dados para PDF
+    if (resultado.status === 'VALIDADO') {
+      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
+      dadosCache.set(cacheKey, {
+        documento: bachillerato,
+        fechaNacimiento: fechaNacimiento || '',
+        mensagem: resultado.mensagem,
+        timestamp: Date.now()
+      });
+      console.log(`💾 Dados salvos para PDF`);
+    }
 
     return res.status(200).json(resultado);
 
