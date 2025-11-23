@@ -122,7 +122,7 @@ export default function Home() {
         <title>Zion Assessoria - Consulta RUE MEC</title>
         <meta name="description" content="Sistema de consulta RUE - Registro Único del Estudiante - MEC Paraguay" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/logo-zion.png" />
+        <link rel="icon" href="/favicon.svg" />
       </Head>
 
       {/* Header/Navbar */}

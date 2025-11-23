@@ -16,7 +16,7 @@ export default function About() {
           <div className="flex justify-between items-center py-6">
             <Link href="/" className="flex items-center space-x-3 hover:opacity-90 transition">
               <img 
-                src="/logo-zion.png" 
+                src="/favicon.svg" 
                 alt="Zion Assessoria" 
                 className="h-14 w-auto"
               />

@@ -30,36 +30,49 @@ async function consultarBachillerato(req, res) {
       console.log(`📅 Data de nascimento: ${fechaNacimiento}`);
     }
 
-    // Chama serviço Puppeteer
-    const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
+    try {
+      // Chama serviço Puppeteer
+      const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
 
-    // Salva HTML no cache para geração rápida de PDF
-    if (resultado.htmlCompleto) {
-      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-      htmlCache.set(cacheKey, {
-        html: resultado.htmlCompleto,
-        timestamp: Date.now()
-      });
-      console.log(`💾 HTML salvo no cache: ${cacheKey}`);
+      // Salva HTML no cache para geração rápida de PDF
+      if (resultado.htmlCompleto) {
+        const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
+        htmlCache.set(cacheKey, {
+          html: resultado.htmlCompleto,
+          timestamp: Date.now()
+        });
+        console.log(`💾 HTML salvo no cache: ${cacheKey}`);
+        
+        // Remove HTML do retorno (não enviar para frontend)
+        delete resultado.htmlCompleto;
+      }
+
+      // Salva dados da consulta no cache para PDF customizado
+      if (resultado.status === 'VALIDADO') {
+        const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
+        dadosCache.set(cacheKey, {
+          documento: bachillerato,
+          fechaNacimiento: fechaNacimiento || '',
+          mensagem: resultado.mensagem,
+          timestamp: Date.now()
+        });
+        console.log(`💾 Dados salvos para PDF customizado`);
+      }
+
+      // Retorna resultado
+      return res.status(200).json(resultado);
       
-      // Remove HTML do retorno (não enviar para frontend)
-      delete resultado.htmlCompleto;
-    }
-
-    // Salva dados da consulta no cache para PDF customizado
-    if (resultado.status === 'VALIDADO') {
-      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-      dadosCache.set(cacheKey, {
-        documento: bachillerato,
-        fechaNacimiento: fechaNacimiento || '',
-        mensagem: resultado.mensagem,
-        timestamp: Date.now()
+    } catch (puppeteerError) {
+      // Se Puppeteer falhar, retorna erro mas permite continuar
+      console.error('⚠️ Puppeteer falhou (memória insuficiente):', puppeteerError.message);
+      
+      return res.status(503).json({
+        error: 'Serviço temporariamente indisponível - memória insuficiente no servidor',
+        detalhes: 'O servidor Oracle Free Tier tem apenas 500MB RAM. Considere upgrade ou usar horário de menor uso.',
+        status: 'ERROR',
+        codigo: 'MEMORY_LIMIT'
       });
-      console.log(`💾 Dados salvos para PDF customizado`);
     }
-
-    // Retorna resultado
-    return res.status(200).json(resultado);
 
   } catch (error) {
     console.error('❌ Erro na consulta:', error);
