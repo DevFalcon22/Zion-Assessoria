@@ -13,9 +13,9 @@ export default async function handler(req, res) {
   console.log('📄 Proxy PDF: Conectando ao backend:', BACKEND_URL);
 
   try {
-    // Fazer requisição ao backend Oracle Cloud com timeout de 50 segundos
+    // Fazer requisição ao backend Oracle Cloud com timeout de 55 segundos
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 50000);
+    const timeout = setTimeout(() => controller.abort(), 55000);
 
     const response = await fetch(`${BACKEND_URL}/api/gerar-pdf`, {
       method: 'POST',

@@ -8,7 +8,7 @@ const path = require('path');
 
 const CONFIG = {
   URL_BASE: 'https://tramites.mec.gov.py/gestion_tramites/verificar_bachilleratos/',
-  TIMEOUT: 45000, // 45 segundos
+  TIMEOUT: 30000, // 30 segundos
   CHROME_PATH: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/microsoft-edge-stable'
 };
 
@@ -24,7 +24,7 @@ async function gerarPDFBachillerato(documento, fechaNacimiento) {
   try {
     console.log(`📄 Gerando PDF para documento: ${documento}`);
     
-    // Inicia navegador headless
+    // Inicia navegador headless com args otimizados
     browser = await puppeteer.launch({
       executablePath: CONFIG.CHROME_PATH,
       headless: true,
@@ -33,15 +33,32 @@ async function gerarPDFBachillerato(documento, fechaNacimiento) {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--disable-software-rasterizer',
         '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--metrics-recording-only',
+        '--mute-audio',
         '--no-first-run',
+        '--dns-prefetch-disable',
         '--no-zygote',
         '--single-process'
       ]
     });
 
     const page = await browser.newPage();
+    
+    // Bloquear recursos pesados (mas permitir CSS para PDF)
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      if(['image', 'font'].includes(req.resourceType())){
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
     
     // Configura viewport
     await page.setViewport({ 
@@ -55,9 +72,6 @@ async function gerarPDFBachillerato(documento, fechaNacimiento) {
       waitUntil: 'networkidle0',
       timeout: CONFIG.TIMEOUT 
     });
-
-    // Aguarda formulário carregar
-    await page.waitForTimeout(2000);
 
     // Preenche o formulário
     console.log('✍️ Preenchendo formulário...');
@@ -73,28 +87,22 @@ async function gerarPDFBachillerato(documento, fechaNacimiento) {
       await page.keyboard.press('Enter');
       console.log('⏳ Aguardando resultado...');
       
-      // Aguarda resultado aparecer
-      await page.waitForTimeout(5000);
+      // Aguarda resultado aparecer (reduzido)
+      await page.waitForTimeout(2000);
       
       // Verifica se resultado apareceu
       await Promise.race([
-        page.waitForSelector('.panel.panel-success', { timeout: 15000, visible: true }),
-        page.waitForSelector('.panel.panel-danger', { timeout: 15000, visible: true }),
-        page.waitForSelector('.panel', { timeout: 15000, visible: true })
+        page.waitForSelector('.panel.panel-success', { timeout: 8000, visible: true }),
+        page.waitForSelector('.panel.panel-danger', { timeout: 8000, visible: true }),
+        page.waitForSelector('.panel', { timeout: 8000, visible: true })
       ]);
       
       console.log('✅ Resultado carregado!');
     }
 
-    // Aguarda página estabilizar
-    await page.waitForTimeout(2000);
-
     // Aplica CSS de impressão
     console.log('🖨️ Aplicando estilo de impressão...');
     await page.emulateMediaType('print');
-    
-    // Aguarda renderização com CSS de impressão
-    await page.waitForTimeout(1000);
 
     // Gera PDF em memória
     console.log('📑 Gerando PDF...');
