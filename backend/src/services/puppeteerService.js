@@ -178,54 +178,16 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
 
     const status = isValidado ? 'VALIDADO' : 'NAO_VALIDADO';
     
-    let pdfBuffer = null;
-
-    // Se está validado, gera o PDF em memória (não salva no disco)
-    if (isValidado) {
-      console.log('✅ Bachillerato validado! Gerando PDF em memória...');
-
-      // Aplica media print CSS antes de gerar o PDF (simula "Imprimir")
-      await page.emulateMediaType('print');
-
-      // Aguarda renderização com CSS de impressão
-      await page.waitForTimeout(1000);
-
-      // Gera o PDF em memória (não salva no disco) - modo paisagem
-      pdfBuffer = await page.pdf({
-        format: 'A4',
-        landscape: true,  // Modo paisagem
-        printBackground: true,
-        preferCSSPageSize: false,
-        displayHeaderFooter: true,
-        headerTemplate: '<div></div>',
-        footerTemplate: `
-          <div style="font-size: 10px; text-align: center; width: 100%; padding: 5px;">
-            Documento gerado em: ${new Date().toLocaleString('pt-BR')} | Zion Assessoria
-          </div>
-        `,
-        margin: {
-          top: '15mm',
-          right: '10mm',
-          bottom: '20mm',
-          left: '10mm'
-        },
-        scale: 0.9
-      });
-
-      console.log(`📑 PDF gerado em memória (${(pdfBuffer.length / 1024).toFixed(2)} KB)`);
-    } else {
-      console.log('❌ Bachillerato não validado');
-    }
+    console.log(isValidado ? '✅ Bachillerato validado!' : '❌ Bachillerato não validado');
 
     // Fecha o navegador
     await browser.close();
 
-    // Retorna o resultado com PDF em base64 (se validado)
+    // Retorna o resultado SEM PDF (PDF gerado em rota separada)
     return {
       status,
       mensagem: resultadoTexto.trim(),
       bachillerato,
-      pdfBase64: pdfBuffer ? pdfBuffer.toString('base64') : null,
       timestamp: new Date().toISOString()
     };
 

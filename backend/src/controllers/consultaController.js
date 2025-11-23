@@ -1,10 +1,9 @@
-const { consultarBachilleratoRapido } = require('../services/consultaService');
+const { consultarBachilleratoMEC } = require('../services/puppeteerService');
 const { gerarPDFBachillerato } = require('../services/pdfService');
 
 /**
- * ⚡ Controller para consulta RÁPIDA de bachillerato
- * Usa Axios + Cheerio (sem Puppeteer)
- * Retorna apenas dados JSON em ~1 segundo
+ * Controller para consulta de bachillerato
+ * Usa Puppeteer para automação (site requer JavaScript)
  */
 async function consultarBachillerato(req, res) {
   try {
@@ -18,15 +17,15 @@ async function consultarBachillerato(req, res) {
       });
     }
 
-    console.log(`📋 Consulta rápida para: ${bachillerato}`);
+    console.log(`📋 Consulta para: ${bachillerato}`);
     if (fechaNacimiento) {
       console.log(`📅 Data de nascimento: ${fechaNacimiento}`);
     }
 
-    // Chama serviço de consulta rápida (Axios + Cheerio)
-    const resultado = await consultarBachilleratoRapido(bachillerato, fechaNacimiento);
+    // Chama serviço Puppeteer
+    const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
 
-    // Retorna JSON limpo e rápido
+    // Retorna resultado
     return res.status(200).json(resultado);
 
   } catch (error) {
