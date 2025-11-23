@@ -35,7 +35,15 @@ async function gerarPDFDoHTML(htmlContent) {
         '--disable-dev-shm-usage',
         '--disable-gpu',
         '--disable-extensions',
-        '--single-process'
+        '--single-process',
+        '--disable-accelerated-2d-canvas',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-breakpad',
+        '--disable-backing-store-limit',
+        '--disable-ipc-flooding-protection',
+        '--renderer-process-limit=1',
+        '--js-flags="--max-old-space-size=128"'
       ]
     });
 

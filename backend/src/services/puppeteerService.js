@@ -62,7 +62,15 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
         '--no-first-run',
         '--dns-prefetch-disable',
         '--no-zygote',
-        '--single-process'  // Importante para Oracle (1GB RAM)
+        '--single-process',
+        '--disable-accelerated-2d-canvas',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-breakpad',
+        '--disable-backing-store-limit',
+        '--disable-ipc-flooding-protection',
+        '--renderer-process-limit=1',
+        '--js-flags="--max-old-space-size=256"'
       ],
       slowMo: DEBUG_MODE ? 100 : 0
     });
