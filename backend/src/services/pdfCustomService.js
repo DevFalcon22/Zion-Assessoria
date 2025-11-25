@@ -93,13 +93,11 @@ function gerarPDFCustomizado(dados) {
       
       doc.moveDown(3);
       
-      // ===== RODAPÉ =====
-      const footerY = doc.page.height - 80;
-      
-      // Rodapé removido conforme solicitado
-      
-      // Finaliza o PDF
-      doc.end();
+         // Garante que o PDF tenha apenas uma página e sem rodapé
+         if (doc.pageNumber > 1) {
+            while (doc.pageNumber > 1) doc.removePage(doc.pageNumber - 1);
+         }
+         doc.end();
       
     } catch (error) {
       reject(error);
