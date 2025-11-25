@@ -96,19 +96,6 @@ function gerarPDFCustomizado(dados) {
       // ===== RODAPÉ =====
       const footerY = doc.page.height - 80;
       
-      doc.fontSize(8)
-         .fillColor('#666')
-         .font('Helvetica')
-         .text('Aviso Legal (https://tramites.mec.gov.py/gestion_tramites/legal)', 50, footerY, {
-           width: boxWidth / 2,
-           continued: true
-         })
-         .text(' | Acerca de (https://tramites.mec.gov.py/gestion_tramites/about)', {
-           width: boxWidth / 2
-         });
-      
-      doc.moveDown(0.5);
-      
       // Rodapé removido conforme solicitado
       
       // Finaliza o PDF
