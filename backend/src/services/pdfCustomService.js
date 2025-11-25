@@ -109,21 +109,7 @@ function gerarPDFCustomizado(dados) {
       
       doc.moveDown(0.5);
       
-      doc.fontSize(8)
-         .fillColor('#666')
-         .text('📄 (https://creativecommons.org/licenses/by/4.0/) 2025 - Aplicativo construído y mantenido por el MEC (https://mec.gov.py)', {
-           width: boxWidth,
-           align: 'center'
-         });
-      
-      doc.moveDown(1);
-      
-      doc.fontSize(7)
-         .fillColor('#999')
-         .text(`Documento gerado em: ${new Date().toLocaleString('pt-BR')} | Zion Assessoria`, {
-           width: boxWidth,
-           align: 'center'
-         });
+      // Rodapé removido conforme solicitado
       
       // Finaliza o PDF
       doc.end();
