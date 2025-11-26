@@ -63,12 +63,7 @@ async function gerarPDFDoHTML(htmlContent) {
       printBackground: true,
       displayHeaderFooter: true,
       headerTemplate: '<div></div>',
-      footerTemplate: `
-        <div style="font-size: 10px; text-align: center; width: 100%; padding: 5px;">
-          Documento gerado em: ${new Date().toLocaleString('pt-BR')} | Zion Assessoria
-        </div>
-      `,
-      margin: { top: '15mm', right: '10mm', bottom: '20mm', left: '10mm' },
+          margin: { top: '15mm', right: '10mm', bottom: '20mm', left: '10mm' },
       scale: 0.9
     });
 
