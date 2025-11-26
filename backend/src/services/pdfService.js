@@ -26,6 +26,25 @@ async function gerarPDFDoHTML(htmlContent) {
   try {
     console.log('📄 Gerando PDF a partir do HTML salvo (SEM navegação)...');
     
+    // Remove textos indesejados do HTML antes de gerar o PDF
+    const textosIndesejados = [
+      'Ø=ÜÄ',
+      'https://creativecommons.org/licenses/by/4.0/',
+      '2025 - Aplicativo construído y mantenido por el MEC',
+      'https://mec.gov.py',
+      'Documento gerado em:',
+      'Zion Assessoria'
+    ];
+    let htmlFiltrado = htmlContent;
+    textosIndesejados.forEach(texto => {
+      // Remove elementos HTML inteiros que contenham o texto indesejado
+      const elementRegex = new RegExp(`<([a-zA-Z]+)[^>]*>[^<]*${texto}[^<]*<\/\\1>`, 'gi');
+      htmlFiltrado = htmlFiltrado.replace(elementRegex, '');
+      // Remove o texto isolado caso não esteja em um elemento
+      const textRegex = new RegExp(texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      htmlFiltrado = htmlFiltrado.replace(textRegex, '');
+    });
+
     browser = await puppeteer.launch({
       executablePath: CONFIG.CHROME_PATH,
       headless: true,
@@ -50,7 +69,7 @@ async function gerarPDFDoHTML(htmlContent) {
     const page = await browser.newPage();
     
     // Carrega HTML direto (SUPER RÁPIDO - sem navegação)
-    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+    await page.setContent(htmlFiltrado, { waitUntil: 'domcontentloaded' });
     console.log('✅ HTML carregado!');
 
     // Aplica CSS de impressão
@@ -63,7 +82,8 @@ async function gerarPDFDoHTML(htmlContent) {
       printBackground: true,
       displayHeaderFooter: true,
       headerTemplate: '<div></div>',
-          margin: { top: '15mm', right: '10mm', bottom: '20mm', left: '10mm' },
+      footerTemplate: '<div></div>',
+      margin: { top: '15mm', right: '10mm', bottom: '20mm', left: '10mm' },
       scale: 0.9
     });
 
