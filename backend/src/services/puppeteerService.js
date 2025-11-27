@@ -173,7 +173,7 @@ async function consultarBachilleratoMEC(bachillerato, fechaNacimiento = '') {
             if (body.includes('egresado') || body.includes('Datos del Egresado')) {
               return body;
             }
-            return 'Nenhum resultado encontrado';
+              return 'O documento submetido não está registrado no sistema de gestão acadêmica do MEC.';
           });
           console.log('📄 Resultado (BODY) extraído:', resultadoTexto.substring(0, 200));
         }
