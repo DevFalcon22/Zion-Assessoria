@@ -43,14 +43,15 @@ export default function Home() {
     } catch (err) {
       console.error('Erro na requisição:', err)
       
-      let errorMessage = 'Erro ao consultar bachillerato. ';
-      
+      let errorMessage = 'OPA!!\n';
       if (err.response?.status === 500) {
-        errorMessage += 'O servidor encontrou um problema ao processar a consulta. ';
-        if (err.response?.data?.detalhes) {
-          errorMessage += `Detalhes: ${err.response.data.detalhes}`;
+        errorMessage += 'Erro ao consultar bachillerato. O servidor encontrou um problema ao processar a consulta.';
+        if (err.response?.data?.detalhes && err.response.data.detalhes.includes('Falha na automação')) {
+          errorMessage += '\nO documento submetido não está registrado no sistema de gestão acadêmica do MEC.';
+        } else if (err.response?.data?.detalhes) {
+          errorMessage += ` Detalhes: ${err.response.data.detalhes}`;
         } else {
-          errorMessage += 'Por favor, verifique se os dados estão corretos e tente novamente.';
+          errorMessage += '\nPor favor, verifique se os dados estão corretos e tente novamente.';
         }
       } else if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
         errorMessage = 'Não foi possível conectar ao servidor. Verifique se o backend está rodando na porta 5000.';
@@ -59,7 +60,6 @@ export default function Home() {
       } else {
         errorMessage += 'Tente novamente em alguns instantes.';
       }
-      
       setError(errorMessage)
     } finally {
       setLoading(false)
