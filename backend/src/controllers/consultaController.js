@@ -30,26 +30,24 @@ async function consultarBachillerato(req, res) {
     let resultado;
 
     try {
-      // 1️⃣ tenta Axios (rápido)
-      resultado = await consultarMEC(bachillerato, fechaNacimiento);
-    } catch (err) {
-      console.log("⚠️ Axios falhou, usando Puppeteer...");
-      // 2️⃣ fallback Puppeteer
-      resultado = await fallbackMEC(bachillerato, fechaNacimiento);
-    }
+  console.log("📤 Enviando para MEC...");
 
-    cache.set(key, {
-      time: Date.now(),
-      data: resultado
-    });
+  const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
 
-    return res.json(resultado);
+  console.log("📥 RESPOSTA BRUTA:");
+  console.log(resultado);
 
-  } catch (error) {
-    return res.status(500).json({
-      status: "ERROR",
-      error: error.message
-    });
+  return res.json(resultado);
+
+} catch (error) {
+  console.error("❌ ERRO DETALHADO:");
+  console.error(error.response?.data || error.message);
+
+  return res.status(500).json({
+    error: error.message,
+    detalhes: error.response?.data || null
+  });
+}
   }
 }
 
