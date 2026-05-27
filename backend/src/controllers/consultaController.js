@@ -18,7 +18,7 @@ async function consultarBachillerato(req, res) {
 
     const key = `${bachillerato}_${fechaNacimiento || ""}`;
 
-    // cache hit
+    // CACHE
     const cached = cache.get(key);
     if (cached && Date.now() - cached.time < TTL) {
       return res.json({
@@ -30,24 +30,35 @@ async function consultarBachillerato(req, res) {
     let resultado;
 
     try {
-  console.log("📤 Enviando para MEC...");
+      console.log("📤 Enviando para MEC...");
 
-  const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
+      // ✔ usa Axios primeiro
+      resultado = await consultarMEC(bachillerato, fechaNacimiento);
 
-  console.log("📥 RESPOSTA BRUTA:");
-  console.log(resultado);
+      console.log("📥 RESPOSTA MEC OK");
 
-  return res.json(resultado);
+    } catch (error) {
+      console.log("⚠️ Axios falhou, usando Puppeteer...");
 
-} catch (error) {
-  console.error("❌ ERRO DETALHADO:");
-  console.error(error.response?.data || error.message);
+      resultado = await fallbackMEC(bachillerato, fechaNacimiento);
+    }
 
-  return res.status(500).json({
-    error: error.message,
-    detalhes: error.response?.data || null
-  });
-}
+    // salva cache
+    cache.set(key, {
+      time: Date.now(),
+      data: resultado
+    });
+
+    return res.json(resultado);
+
+  } catch (error) {
+    console.error("❌ ERRO DETALHADO:");
+    console.error(error.message);
+
+    return res.status(500).json({
+      status: "ERROR",
+      error: error.message
+    });
   }
 }
 
