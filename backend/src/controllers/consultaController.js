@@ -1,147 +1,58 @@
-const { consultarBachilleratoMEC } = require('../services/puppeteerService');
-const { gerarPDFBachillerato } = require('../services/pdfService');
-const { gerarPDFCustomizado } = require('../services/pdfCustomService');
+const { consultarMEC } = require("../services/mecAxiosService");
+const { fallbackMEC } = require("../services/mecPuppeteerFallback");
 
-// Cache temporário de HTML (expira em 5 minutos)
-const htmlCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+// cache simples
+const cache = new Map();
+const TTL = 5 * 60 * 1000;
 
-// Cache de dados da consulta para PDF customizado
-const dadosCache = new Map();
-
-/**
- * Controller para consulta de bachillerato
- * Usa Puppeteer para automação (site requer JavaScript)
- */
 async function consultarBachillerato(req, res) {
   try {
     const { bachillerato, fechaNacimiento } = req.body;
 
-    if (!bachillerato || bachillerato.trim() === '') {
+    if (!bachillerato) {
       return res.status(400).json({
-        error: 'Número de documento é obrigatório',
-        status: 'ERROR'
+        status: "ERROR",
+        error: "Documento obrigatório"
       });
     }
 
-    console.log(`📋 Consulta para: ${bachillerato}`);
-    if (fechaNacimiento) {
-      console.log(`📅 Data de nascimento: ${fechaNacimiento}`);
-    }
-    
-    // Chama serviço Puppeteer (com Chromium bundled)
-    const resultado = await consultarBachilleratoMEC(bachillerato, fechaNacimiento);
+    const key = `${bachillerato}_${fechaNacimiento || ""}`;
 
-    // Salva HTML no cache
-    if (resultado.htmlCompleto) {
-      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-      htmlCache.set(cacheKey, {
-        html: resultado.htmlCompleto,
-        timestamp: Date.now()
-      });
-      console.log(`💾 HTML salvo no cache`);
-      delete resultado.htmlCompleto;
-    }
-
-    // Salva dados para PDF
-    if (resultado.status === 'VALIDADO') {
-      const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-      dadosCache.set(cacheKey, {
-        documento: bachillerato,
-        fechaNacimiento: fechaNacimiento || '',
-        mensagem: resultado.mensagem,
-        timestamp: Date.now()
-      });
-      console.log(`💾 Dados salvos para PDF`);
-    }
-
-    return res.status(200).json(resultado);
-
-  } catch (error) {
-    console.error('❌ Erro:', error);
-    return res.status(500).json({
-      error: 'Erro ao processar consulta',
-      detalhes: error.message,
-      status: 'ERROR'
-    });
-  }
-}
-
-/**
- * 📄 Controller para geração de PDF
- * Usa Puppeteer apenas quando necessário
- * Retorna PDF em base64 para visualização
- */
-async function gerarPDF(req, res) {
-  try {
-    const { bachillerato, fechaNacimiento } = req.body;
-
-    // Validação básica
-    if (!bachillerato || bachillerato.trim() === '') {
-      return res.status(400).json({
-        error: 'Número de documento é obrigatório',
-        status: 'ERROR'
+    // cache hit
+    const cached = cache.get(key);
+    if (cached && Date.now() - cached.time < TTL) {
+      return res.json({
+        ...cached.data,
+        cache: true
       });
     }
 
-    console.log(`📄 Gerando PDF para: ${bachillerato}`);
+    let resultado;
 
-    // Busca dados do cache
-    const cacheKey = `${bachillerato}_${fechaNacimiento || ''}`;
-    const cached = dadosCache.get(cacheKey);
-    
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-      // Usa PDF customizado (INSTANTÂNEO - ~100ms)
-      console.log('⚡ Gerando PDF customizado (sem Puppeteer) - INSTANTÂNEO!');
-      const pdfBuffer = await gerarPDFCustomizado(cached);
-      
-      const pdfBase64 = pdfBuffer.toString('base64');
-      
-      return res.status(200).json({
-        status: 'VALIDADO',
-        pdfBase64,
-        tamanho: `${(pdfBuffer.length / 1024).toFixed(2)} KB`,
-        timestamp: new Date().toISOString(),
-        metodo: 'customizado'
-      });
-    }
-    
-    // Se não tem cache, tenta usar HTML salvo (rápido)
-    const htmlCached = htmlCache.get(cacheKey);
-    let htmlSalvo = null;
-    
-    if (htmlCached && (Date.now() - htmlCached.timestamp < CACHE_TTL)) {
-      htmlSalvo = htmlCached.html;
-      console.log('⚡ Usando HTML do cache - Geração rápida!');
+    try {
+      // 1️⃣ tenta Axios (rápido)
+      resultado = await consultarMEC(bachillerato, fechaNacimiento);
+    } catch (err) {
+      console.log("⚠️ Axios falhou, usando Puppeteer...");
+      // 2️⃣ fallback Puppeteer
+      resultado = await fallbackMEC(bachillerato, fechaNacimiento);
     }
 
-    // Gera PDF usando Puppeteer (fallback - lento)
-    console.log('⏳ Gerando PDF com Puppeteer (pode demorar 30s+)...');
-    const pdfBuffer = await gerarPDFBachillerato(bachillerato, fechaNacimiento, htmlSalvo);
-
-    // Converte para base64
-    const pdfBase64 = pdfBuffer.toString('base64');
-
-    // Retorna PDF em base64
-    return res.status(200).json({
-      status: 'VALIDADO',
-      pdfBase64,
-      tamanho: `${(pdfBuffer.length / 1024).toFixed(2)} KB`,
-      timestamp: new Date().toISOString()
+    cache.set(key, {
+      time: Date.now(),
+      data: resultado
     });
 
+    return res.json(resultado);
+
   } catch (error) {
-    console.error('❌ Erro ao gerar PDF:', error);
-    
     return res.status(500).json({
-      error: 'Erro ao gerar PDF',
-      detalhes: error.message,
-      status: 'ERROR'
+      status: "ERROR",
+      error: error.message
     });
   }
 }
 
 module.exports = {
-  consultarBachillerato,
-  gerarPDF
+  consultarBachillerato
 };
